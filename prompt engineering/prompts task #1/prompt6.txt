@@ -1,0 +1,1 @@
+I need the exact GPS coordinates of {place} in decimal degree notation.

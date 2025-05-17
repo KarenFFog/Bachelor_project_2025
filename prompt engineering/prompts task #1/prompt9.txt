@@ -1,0 +1,4 @@
+Q: Can you provide the geographic coordinates for Tokyo in decimal format?       
+A: The latitude and longitude of Tokyo are 35.682839° N, 139.759455° E.
+Q: Can you provide the geographic coordinates for {place} in decimal format? 
+A: 

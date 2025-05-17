@@ -1,0 +1,1 @@
+Tell me the numerical latitude and longitude of {place} in decimal degrees.

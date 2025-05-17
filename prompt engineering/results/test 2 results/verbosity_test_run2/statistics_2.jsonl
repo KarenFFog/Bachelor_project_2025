@@ -1,0 +1,8 @@
+{"prompt_id": 1, "mean": 12.67, "median": 12.0, "std": 3.0464897833408204, "max": 21, "min": 7, "total": 1267, "num_samples": 100}
+{"prompt_id": 2, "mean": 11.31, "median": 11.0, "std": 2.6784137096423324, "max": 21, "min": 6, "total": 1131, "num_samples": 100}
+{"prompt_id": 3, "mean": 11.92, "median": 12.0, "std": 1.895679297771646, "max": 18, "min": 6, "total": 1192, "num_samples": 100}
+{"prompt_id": 4, "mean": 13.31, "median": 13.5, "std": 2.809608513654527, "max": 19, "min": 7, "total": 1331, "num_samples": 100}
+{"prompt_id": 5, "mean": 11.11, "median": 12.0, "std": 2.416174662560635, "max": 18, "min": 4, "total": 1111, "num_samples": 100}
+{"prompt_id": 6, "mean": 10.56, "median": 10.0, "std": 2.0065891457894414, "max": 17, "min": 7, "total": 1056, "num_samples": 100}
+{"prompt_id": 7, "mean": 13.91, "median": 14.0, "std": 2.778830689336794, "max": 20, "min": 7, "total": 1391, "num_samples": 100}
+{"prompt_id": 8, "mean": 11.49, "median": 11.0, "std": 2.984945560642606, "max": 17, "min": 5, "total": 1149, "num_samples": 100}

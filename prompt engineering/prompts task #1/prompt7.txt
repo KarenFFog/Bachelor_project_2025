@@ -1,0 +1,1 @@
+Could you return the coordinates (latitude and longitude) of {place} in decimal degrees?
