@@ -1,0 +1,1 @@
+Imagine you're standing at {coords}. What does the natural world around you look like? Describe the landscape, climate, plant and animal life, and any unique geographical features.

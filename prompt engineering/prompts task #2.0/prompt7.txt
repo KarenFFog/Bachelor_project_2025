@@ -1,0 +1,1 @@
+Provide a short but accurate description of the natural world at {coords}, including information about the terrain, climate, and notable natural features.

@@ -1,0 +1,1 @@
+What is the overall geographical setting at {coords}? Describe the land’s features, vegetation, wildlife, and climatic conditions in this area.

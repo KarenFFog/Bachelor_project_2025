@@ -1,0 +1,1 @@
+Imagine you are standing at {coords}. What do you see?

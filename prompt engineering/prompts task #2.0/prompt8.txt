@@ -1,0 +1,1 @@
+What are the defining geographical characteristics of the area at {coords}? Include landforms, vegetation, fauna, climate, and notable landscape elements.

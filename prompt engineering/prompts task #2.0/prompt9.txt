@@ -1,0 +1,1 @@
+Give a description of the general geographical setting at {coords}, paying attention to terrain, climate, flora and fauna, and other distinctive natural features.

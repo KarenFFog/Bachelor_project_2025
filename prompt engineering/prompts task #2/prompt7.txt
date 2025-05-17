@@ -1,0 +1,1 @@
+Describe the physical environment found at {coords}. Use geographical terms to characterize the terrain, vegetation, wildlife, and weather.

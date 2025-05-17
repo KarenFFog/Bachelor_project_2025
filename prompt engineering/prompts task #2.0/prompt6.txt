@@ -1,0 +1,1 @@
+Give a concise yet detailed overview of the natural environment around {coords}, mentioning the terrain, climate, and any remarkable natural elements.

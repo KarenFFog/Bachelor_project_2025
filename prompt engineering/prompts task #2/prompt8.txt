@@ -1,0 +1,2 @@
+Q: What can be said about the landscape at {coords}? Describe the physical terrain, vegetation, wildlife, and climatic conditions.
+A: 

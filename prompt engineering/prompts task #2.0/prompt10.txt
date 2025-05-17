@@ -1,0 +1,1 @@
+Analyze the geographic profile of the area located at {coords}. Include observations on landform types, ecosystems present, climatic patterns, and distinctive physical attributes.

@@ -1,0 +1,12 @@
+# Ignore compiled Python files
+__pycache__/
+*.pyc
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# data 
+data/
+articles/
+data_100k_v001/
+torchgeo/

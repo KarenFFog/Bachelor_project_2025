@@ -1,0 +1,1 @@
+At the coordinates {coords}, provide a detailed description of the natural landscape, including the topography, vegetation, wildlife, climate, and any significant physical features.

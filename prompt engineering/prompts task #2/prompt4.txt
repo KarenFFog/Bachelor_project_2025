@@ -1,0 +1,1 @@
+Give a short but precise description of the natural world around {coords}. Please include details about the terrain, climate, and any notable natural elements.
