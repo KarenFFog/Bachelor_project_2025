@@ -7,6 +7,10 @@ from sklearn.metrics import f1_score, precision_score, recall_score
 
 from baseline import *
 
+import torch.multiprocessing
+torch.multiprocessing.set_sharing_strategy('file_system')
+
+
 # ===== CONFIG =====
 root = "/home/fhd511/Geollm_project/BigEarthNet_data_train_s2/BigEarthNet-v1.0"
 model_path = "best_model.pth"
@@ -46,7 +50,7 @@ test_dataset = BigEarthNetS2ClassifierDataset(
     ]
 )
 
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
+test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=2)
 
 # ===== LOAD MODEL =====
 model = BigEarthNetResNet50(in_channels=10, num_classes=43, pretrained=False).to(device)

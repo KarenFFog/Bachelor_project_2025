@@ -10,16 +10,20 @@ import time
 
 start = time.time()
 
+# === LOAD METADATA ===
 with open("metadata_train.jsonl", "r") as f:
     train_locations = [json.loads(line)["location_name"] for line in f]
 
 with open("metadata_val.jsonl", "r") as f:
     val_locations = [json.loads(line)["location_name"] for line in f]
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# === CONFIG ===
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 root = "/home/fhd511/Geollm_project/BigEarthNet_data_train_s2/BigEarthNet-v1.0"
 
+
+# === LABEL SETUP ===
 all_classes = [
     "Continuous urban fabric",
     "Discontinuous urban fabric",
@@ -68,9 +72,10 @@ all_classes = [
 
 class_to_idx = {label: i for i, label in enumerate(all_classes)}
 
+
+# === INIT TRAIN SET ===
 start_time = time.time()
 
-# initialize train set
 dataset = BigEarthNetS2ClassifierDataset(
     root=root,
     class_to_idx=class_to_idx,
@@ -88,11 +93,11 @@ print(f"train dataset initialized in {(end_time - start_time):.2f} seconds", flu
 # small_dataset = Subset(dataset, range(1000))  # First 1000 samples
 # dataloader = DataLoader(small_dataset, batch_size=32, shuffle=True, num_workers=4)
 
-
 # dataloader
 dataloader = DataLoader(dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True)
 
-# initialize val set
+
+# === INIT VAL SET ===
 val_dataset = BigEarthNetS2ClassifierDataset(
     root=root,
     class_to_idx=class_to_idx,
@@ -107,9 +112,9 @@ print("val dataset initialized", flush=True)
 # val dataloader
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=4, pin_memory=True)
 
-# ======================
 
-# initialize model
+
+# === INIT MODEL ===
 model = BigEarthNetResNet50(in_channels=10, num_classes=43, pretrained=False).to(device)
 
 
@@ -131,7 +136,8 @@ criterion = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 print("model initialized", flush=True)
 
-# training loop
+
+# === TRAINING LOOP ===
 epochs = 50
 patience_counter = 0
 patience = 3
