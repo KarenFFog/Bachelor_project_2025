@@ -79,11 +79,7 @@ start_time = time.time()
 dataset = BigEarthNetS2ClassifierDataset(
     root=root,
     class_to_idx=class_to_idx,
-    folder_list=train_locations,
-    selected_bands=[
-        'B02', 'B03', 'B04', 'B05', 'B06',
-        'B07', 'B08', 'B8A', 'B11', 'B12'
-    ]
+    folder_list=train_locations
 )
 
 end_time = time.time()
@@ -101,11 +97,7 @@ dataloader = DataLoader(dataset, batch_size=32, shuffle=True, num_workers=4, pin
 val_dataset = BigEarthNetS2ClassifierDataset(
     root=root,
     class_to_idx=class_to_idx,
-    folder_list=val_locations,
-    selected_bands=[
-        'B02', 'B03', 'B04', 'B05', 'B06',
-        'B07', 'B08', 'B8A', 'B11', 'B12'
-    ]
+    folder_list=val_locations
 )
 print("val dataset initialized", flush=True)
 
@@ -115,13 +107,14 @@ val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=4
 
 
 # === INIT MODEL ===
-model = BigEarthNetResNet50(in_channels=10, num_classes=43, pretrained=False).to(device)
+model = BigEarthNetResNet50(in_channels=12, num_classes=43, pretrained=False).to(device)
 
 
 # Resume training if checkpoint exists
 start_epoch = 0
 best_val_loss = float("inf")
 
+'''
 if os.path.exists("checkpoint_info.json"):
     with open("checkpoint_info.json", "r") as f:
         checkpoint = json.load(f)
@@ -130,7 +123,7 @@ if os.path.exists("checkpoint_info.json"):
 
     model.load_state_dict(torch.load("best_model.pth"))
     print(f"Resuming from epoch {start_epoch} with best val loss {best_val_loss:.4f}", flush=True)
-
+'''
 
 criterion = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
@@ -191,7 +184,8 @@ for epoch in range(start_epoch, epochs):
             patience_counter=patience_counter, 
             patience=patience, 
             epoch=epoch,
-            path="best_model.pth"
+            check_point_path="baseline_check_point.json",
+            path="best_baseline_model_12.pth"
     )
 
     if should_stop:

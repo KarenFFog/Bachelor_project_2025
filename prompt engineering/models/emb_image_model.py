@@ -46,7 +46,7 @@ class ImageTextEmbeddingDataset(BigEarthNetS2Custom):
 
 # == ResNet-50 model ===
 class ResNetImageEmbedder(nn.Module):
-    def __init__(self, in_channels=10, embedding_dim=384, pretrained=False):
+    def __init__(self, in_channels=12, embedding_dim=384, pretrained=False):
         super().__init__()
 
         weights = ResNet50_Weights.DEFAULT if pretrained else None

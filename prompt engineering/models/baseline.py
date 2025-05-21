@@ -34,7 +34,7 @@ import torchvision.models as models
 from torchvision.models import ResNet50_Weights
 
 class BigEarthNetResNet50(nn.Module):
-    def __init__(self, in_channels=10, num_classes=43, pretrained=False):
+    def __init__(self, in_channels=12, num_classes=43, pretrained=False):
         super().__init__()
         
         # Load base model
@@ -55,7 +55,7 @@ class BigEarthNetResNet50(nn.Module):
         return self.model(x)
 
 
-def maybe_save_checkpoint(model, val_loss, best_loss, patience_counter, patience, epoch, path="best_model.pth"):
+def maybe_save_checkpoint(model, val_loss, best_loss, patience_counter, patience, epoch, check_point_path, path="best_model.pth"):
     """
     Saves the model if val_loss improves.
     Returns updated (best_loss, patience_counter, should_stop).
@@ -64,7 +64,7 @@ def maybe_save_checkpoint(model, val_loss, best_loss, patience_counter, patience
         print(f"Val loss improved ({val_loss:.4f} < {best_loss:.4f}). Saving model...", flush=True)
         torch.save(model.state_dict(), path)
 
-        with open("checkpoint_info.json", "w") as f:
+        with open(check_point_path, "w") as f:
             json.dump({"epoch": epoch + 1, "val_loss": val_loss}, f)
 
         return val_loss, 0, False

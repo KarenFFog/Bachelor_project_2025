@@ -15,15 +15,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 root = "/home/fhd511/Geollm_project/BigEarthNet_data_train_s2/BigEarthNet-v1.0"
 train_json = "embeddings_train.jsonl"
 val_json = "embeddings_val.jsonl"
-epochs = 10
+epochs = 12
 batch_size = 32
 embedding_dim = 384
-patience = 3
+patience = 7
 
-selected_bands=[
-    'B02', 'B03', 'B04', 'B05', 'B06',
-    'B07', 'B08', 'B8A', 'B11', 'B12'
-]
 
 # === INIT DATASETS ===
 with open("metadata_train.jsonl") as f:
@@ -32,8 +28,7 @@ with open("metadata_train.jsonl") as f:
 train_dataset = ImageTextEmbeddingDataset(
     root=root,
     embedding_jsonl="embeddings_train.jsonl",
-    folder_list=train_folders, 
-    selected_bands=selected_bands
+    folder_list=train_folders
 )
 
 with open("metadata_val.jsonl") as f:
@@ -42,8 +37,7 @@ with open("metadata_val.jsonl") as f:
 val_dataset = ImageTextEmbeddingDataset(
     root=root,
     embedding_jsonl="embeddings_val.jsonl",
-    folder_list=val_folders,
-    selected_bands=selected_bands
+    folder_list=val_folders
 )
 
 #train_subset = Subset(train_dataset, range(min(1000, len(train_dataset))))
@@ -54,7 +48,7 @@ val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_w
 
 
 # === LOAD MODEL ===
-model = ResNetImageEmbedder(in_channels=10, embedding_dim=embedding_dim).to(device)
+model = ResNetImageEmbedder(in_channels=12, embedding_dim=embedding_dim).to(device)
 loss_fn = nn.CosineEmbeddingLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
@@ -107,7 +101,8 @@ for epoch in range(epochs):
         patience_counter=patience_counter,
         patience=patience,
         epoch=epoch,
-        path="best_emb_model.pth"
+        check_point_path="pretrain_check_point.json",
+        path="best_pretrain_model.pth"
     )
 
     if should_stop:
