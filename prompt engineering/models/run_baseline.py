@@ -7,11 +7,18 @@ from baseline import *
 
 import json
 import time
+import sys
 
 start = time.time()
 
 # === LOAD METADATA ===
-with open("metadata_train.jsonl", "r") as f:
+# Get the subset percentage from command-line argument
+subset = sys.argv[1]  # expects "1", "5", "10", or "100"
+
+# Determine the correct metadata file
+train_file = "metadata_train.jsonl" if subset == "100" else f"metadata_train_{subset}pct.jsonl"
+
+with open(train_file, "r") as f:
     train_locations = [json.loads(line)["location_name"] for line in f]
 
 with open("metadata_val.jsonl", "r") as f:
@@ -76,7 +83,7 @@ class_to_idx = {label: i for i, label in enumerate(all_classes)}
 # === INIT TRAIN SET ===
 start_time = time.time()
 
-dataset = BigEarthNetS2ClassifierDataset(
+train_dataset = BigEarthNetS2ClassifierDataset(
     root=root,
     class_to_idx=class_to_idx,
     folder_list=train_locations
@@ -90,7 +97,7 @@ print(f"train dataset initialized in {(end_time - start_time):.2f} seconds", flu
 # dataloader = DataLoader(small_dataset, batch_size=32, shuffle=True, num_workers=4)
 
 # dataloader
-dataloader = DataLoader(dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True)
+dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True)
 
 
 # === INIT VAL SET ===
@@ -184,8 +191,8 @@ for epoch in range(start_epoch, epochs):
             patience_counter=patience_counter, 
             patience=patience, 
             epoch=epoch,
-            check_point_path="baseline_check_point.json",
-            path="best_baseline_model_12.pth"
+            check_point_path="baseline_check_point_{subset}pct.json",
+            path="best_baseline_model_12_{subset}pct.pth"
     )
 
     if should_stop:
