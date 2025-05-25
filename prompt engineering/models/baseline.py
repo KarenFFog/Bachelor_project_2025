@@ -55,13 +55,13 @@ class BigEarthNetResNet50(nn.Module):
         return self.model(x)
 
 
-def maybe_save_checkpoint(model, val_loss, best_loss, patience_counter, patience, epoch, check_point_path, path="best_model.pth"):
+def maybe_save_checkpoint(model, val_loss, best_loss, patience_counter, patience, epoch, check_point_path, path):
     """
     Saves the model if val_loss improves.
     Returns updated (best_loss, patience_counter, should_stop).
     """
     if val_loss < best_loss:
-        print(f"Val loss improved ({val_loss:.4f} < {best_loss:.4f}). Saving model...", flush=True)
+        print(f"Val loss improved ({val_loss:.4f} < {best_loss:.4f}). Saving model...to {path}", flush=True)
         torch.save(model.state_dict(), path)
 
         with open(check_point_path, "w") as f:

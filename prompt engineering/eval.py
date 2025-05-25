@@ -310,7 +310,7 @@ def verbosity_test_up(prompts, geo_terms, data_path, n_loc, model_name, token, e
             results.append({
                 "location": i + 1,
                 "response": response,
-                "count": count,
+                "geo term count": count,
                 "true labels": labels
             })
 

@@ -198,7 +198,7 @@ def do_stats(eval_dir, precisions, num_prompts, output_file=None):
             with result_file.open("r", encoding="utf-8") as f:
                 for line in f:
                     data = json.loads(line)
-                    counts.append(data.get("count", 0))
+                    counts.append(data.get("geo term count", 0))
 
             if counts:
                 stats = {
@@ -227,7 +227,7 @@ def plot_mean_vs_precision(
     base_eval_dir, 
     prompt_names, 
     save_stats_path=None, 
-    precisions=[0, 1, 2, 3, 4, 5], 
+    precisions=[0, 1, 2, 3, 4, 5, 6, 7], 
     title="Mean Count vs. Precision", 
     save_path=None):
     """

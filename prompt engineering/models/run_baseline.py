@@ -117,20 +117,9 @@ val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=4
 model = BigEarthNetResNet50(in_channels=12, num_classes=43, pretrained=False).to(device)
 
 
-# Resume training if checkpoint exists
+
 start_epoch = 0
 best_val_loss = float("inf")
-
-'''
-if os.path.exists("checkpoint_info.json"):
-    with open("checkpoint_info.json", "r") as f:
-        checkpoint = json.load(f)
-        start_epoch = checkpoint["epoch"]
-        best_val_loss = checkpoint["val_loss"]
-
-    model.load_state_dict(torch.load("best_model.pth"))
-    print(f"Resuming from epoch {start_epoch} with best val loss {best_val_loss:.4f}", flush=True)
-'''
 
 criterion = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
@@ -142,7 +131,7 @@ epochs = 50
 patience_counter = 0
 patience = 3
 
-for epoch in range(start_epoch, epochs):
+for epoch in range(epochs):
     model.train()
     total_loss = 0
 
@@ -163,7 +152,7 @@ for epoch in range(start_epoch, epochs):
         optimizer.step()
 
         total_loss += loss.item()
-        print(f"Epoch {epoch+1} | Batch {i+1} | Loss: {loss.item():.4f}")
+        #print(f"Epoch {epoch+1} | Batch {i+1} | Loss: {loss.item():.4f}")
 
     avg_loss = total_loss / len(dataloader)
     print(f"Epoch {epoch+1}: Loss = {avg_loss:.4f}", flush=True)
@@ -191,8 +180,8 @@ for epoch in range(start_epoch, epochs):
             patience_counter=patience_counter, 
             patience=patience, 
             epoch=epoch,
-            check_point_path="baseline_check_point_{subset}pct.json",
-            path="best_baseline_model_12_{subset}pct.pth"
+            check_point_path=f"baseline_checkpoint_{subset}pct.json",
+            path=f"best_baseline_model_{subset}pct.pth"
     )
 
     if should_stop:

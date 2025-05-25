@@ -1,3 +1,4 @@
+import sys
 import json
 import re
 import torch
@@ -21,6 +22,7 @@ import nltk
 import jsonlines
 from collections import Counter
 import textwrap
+from scipy.spatial.distance import cosine
 from sklearn.metrics import precision_score, recall_score, f1_score
 
 

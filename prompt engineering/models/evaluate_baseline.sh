@@ -12,6 +12,11 @@
 eval "$(/opt/software/anaconda3/2024.10-py3.12.7/bin/conda shell.bash hook)"
 conda activate geollm
 
-# Run the evaluation script
-python evaluate_baseline.py
+# Get the subset argument from command line
+SUBSET=$1
+
+echo "Running eval on baseline: $SUBSET pct"
+
+# Run Python evaluation script with argument
+python evaluate_baseline.py $SUBSET
 

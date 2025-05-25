@@ -7,7 +7,6 @@ import os
 from torchvision.models import resnet50
 from generate import *
 from baseline import *
-from run_baseline import class_to_idx
 
 import sys
 
@@ -44,6 +43,58 @@ root = "/home/fhd511/Geollm_project/BigEarthNet_data_train_s2/BigEarthNet-v1.0"
 batch_size = 32
 epochs = 50
 patience = 3
+best_val_loss = float("inf")
+patience_counter = 0
+
+
+# === LABEL SETUP ===
+all_classes = [
+    "Continuous urban fabric",
+    "Discontinuous urban fabric",
+    "Industrial or commercial units",
+    "Road and rail networks and associated land",
+    "Port areas",
+    "Airports",
+    "Mineral extraction sites",
+    "Dump sites",
+    "Construction sites",
+    "Green urban areas",
+    "Sport and leisure facilities",
+    "Non-irrigated arable land",
+    "Permanently irrigated land",
+    "Rice fields",
+    "Vineyards",
+    "Fruit trees and berry plantations",
+    "Olive groves",
+    "Pastures",
+    "Annual crops associated with permanent crops",
+    "Complex cultivation patterns",
+    "Land principally occupied by agriculture, with significant areas of natural vegetation",
+    "Agro-forestry areas",
+    "Broad-leaved forest",
+    "Coniferous forest",
+    "Mixed forest",
+    "Natural grassland",
+    "Moors and heathland",
+    "Sclerophyllous vegetation",
+    "Transitional woodland/shrub",
+    "Beaches, dunes, sands",
+    "Bare rock",
+    "Sparsely vegetated areas",
+    "Burnt areas",
+    "Inland marshes",
+    "Peatbogs",
+    "Salt marshes",
+    "Salines",
+    "Intertidal flats",
+    "Water courses",
+    "Water bodies",
+    "Coastal lagoons",
+    "Estuaries",
+    "Sea and ocean"
+]
+
+class_to_idx = {label: i for i, label in enumerate(all_classes)}
 
 
 # === LOAD METADATA ===
@@ -80,6 +131,8 @@ val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_w
 
 # === INIT MODEL ===
 model = LinearProbeModel(pretrained_path="best_pretrain_model.pth").to(device) ######
+print(f"Model loaded", flush=True)
+
 criterion = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(model.classifier.parameters(), lr=1e-4)
 
@@ -99,8 +152,8 @@ for epoch in range(epochs):
         optimizer.step()
         total_loss += loss.item()
     
-    print(f"Epoch {epoch+1}: Train Loss = {total_loss / len(train_loader):.4f}")
-    print(f"{len(train_loader)}")
+    print(f"Epoch {epoch+1}: Train Loss = {total_loss / len(train_loader):.4f}", flush=True)
+    print(f"{len(train_loader)}", flush=True)
 
 
     # === Validation ===
@@ -114,7 +167,7 @@ for epoch in range(epochs):
             val_loss += criterion(logits, labels).item()
 
     avg_val_loss = val_loss / len(val_loader)
-    print(f"Epoch {epoch+1}: Val Loss = {avg_val_loss:.4f}")
+    print(f"Epoch {epoch+1}: Val Loss = {avg_val_loss:.4f}", flush=True)
 	
     best_val_loss, patience_counter, should_stop = maybe_save_checkpoint(
         model=model, 
@@ -123,8 +176,8 @@ for epoch in range(epochs):
         patience_counter=patience_counter, 
         patience=patience, 
         epoch=epoch,
-	check_point_path = "lin_prob_checkinfo_{subset}.json",
-        path="best_lb_model_{subset}.pth"
+	check_point_path = f"lin_prob_checkinfo_{subset}.json",
+        path=f"best_lb_model_{subset}.pth"
     )
 
     if should_stop:
