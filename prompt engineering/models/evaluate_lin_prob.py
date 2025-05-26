@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import f1_score, precision_score, recall_score
 
 from baseline import *
+from linear_prob import LinearProbeModel
 
 import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -22,7 +23,7 @@ subset = sys.argv[1]  # expects "1", "5", "10", or "100"
 
 # ===== CONFIG =====
 root = "/home/fhd511/Geollm_project/BigEarthNet_data_train_s2/BigEarthNet-v1.0"
-model_path = f"best_baseline_model_{subset}pct.pth"
+model_path = f"best_lb_model_{subset}.pth"
 metadata_path = "metadata_test.jsonl"
 batch_size = 32
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -62,7 +63,11 @@ test_dataset = BigEarthNetS2ClassifierDataset(
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=2)
 
 # ===== LOAD MODEL =====
-model = BigEarthNetResNet50(in_channels=12, num_classes=43, pretrained=False).to(device)
+model = LinearProbeModel(
+    pretrained_path=None,  # no need to re-load encoder weights
+    in_channels=12,
+    num_classes=43
+).to(device)
 model.load_state_dict(torch.load(model_path))
 model.eval()
 
@@ -105,10 +110,10 @@ import numpy as np
 predicted_any = np.any(y_pred_bin, axis=0)
 unpredicted_classes = np.where(predicted_any == 0)[0]
 print(f"Number of unpredicted classes: {len(unpredicted_classes)}")
-print("Unpredicted class names:", [all_classes[i] for i in unpredicted_classes])
+print("Classes with no predictions:", unpredicted_classes)
 
 
 # ===== LOG RESULTS TO FILE =====
-log_file = "baseline_results_log.csv"
+log_file = "lin_probe_results_log.csv"
 with open(log_file, "a") as f:
     f.write(f"{subset}%,{f1_macro:.4f},{f1_micro:.4f},{precision_macro:.4f},{recall_macro:.4f}\n")
