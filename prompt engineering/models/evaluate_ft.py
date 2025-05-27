@@ -2,7 +2,7 @@ import os
 import json
 import torch
 import numpy as np
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from sklearn.metrics import f1_score, precision_score, recall_score
 
 from baseline import *
@@ -10,11 +10,9 @@ from baseline import *
 from torchvision.models import resnet50
 import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
-
 import sys
 
-# === LINEAR PROBE MODEL ===
-class LinearProbeModel(nn.Module):
+class FineTuneModel(nn.Module):
     def __init__(self, pretrained_path, in_channels=12, num_classes=43):
         super().__init__()
         self.backbone = resnet50()
@@ -28,16 +26,15 @@ class LinearProbeModel(nn.Module):
             missing, unexpected = self.load_state_dict(state_dict, strict=False)
             print(f"Loaded backbone weights (missing: {missing}, unexpected: {unexpected})")
 
-        # Freeze all layers except classifier
+        # DO NOT freeze any layers — full fine-tuning
         for param in self.backbone.parameters():
-            param.requires_grad = False
+            param.requires_grad = True
         for param in self.classifier.parameters():
             param.requires_grad = True
 
     def forward(self, x):
         feats = self.backbone(x)
         return self.classifier(feats)
-
 
 
 if len(sys.argv) < 2 or sys.argv[1] not in ["1", "5", "10", "100"]:
@@ -50,7 +47,7 @@ subset = sys.argv[1]  # expects "1", "5", "10", or "100"
 
 # ===== CONFIG =====
 root = "/home/fhd511/Geollm_project/BigEarthNet_data_train_s2/BigEarthNet-v1.0"
-model_path = f"best_lb_model_{subset}.pth"
+model_path = f"best_ft_model_{subset}pct.pth"
 metadata_path = "metadata_test.jsonl"
 batch_size = 32
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -58,22 +55,20 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # === LABEL SETUP ===
 all_classes = [
-    "Continuous urban fabric", "Discontinuous urban fabric", "Industrial or commercial units", 
-    "Road and rail networks and associated land", "Port areas", "Airports", "Mineral extraction sites", 
-    "Dump sites", "Construction sites", "Green urban areas", "Sport and leisure facilities", 
-    "Non-irrigated arable land", "Permanently irrigated land", "Rice fields", "Vineyards", 
-    "Fruit trees and berry plantations", "Olive groves", "Pastures", 
-    "Annual crops associated with permanent crops", "Complex cultivation patterns", 
-    "Land principally occupied by agriculture, with significant areas of natural vegetation", 
-    "Agro-forestry areas", "Broad-leaved forest", "Coniferous forest", "Mixed forest", 
-    "Natural grassland", "Moors and heathland", "Sclerophyllous vegetation", 
-    "Transitional woodland/shrub", "Beaches, dunes, sands", "Bare rock", "Sparsely vegetated areas", 
-    "Burnt areas", "Inland marshes", "Peatbogs", "Salt marshes", "Salines", "Intertidal flats", 
+    "Continuous urban fabric", "Discontinuous urban fabric", "Industrial or commercial units",
+    "Road and rail networks and associated land", "Port areas", "Airports", "Mineral extraction sites",
+    "Dump sites", "Construction sites", "Green urban areas", "Sport and leisure facilities",
+    "Non-irrigated arable land", "Permanently irrigated land", "Rice fields", "Vineyards",
+    "Fruit trees and berry plantations", "Olive groves", "Pastures",
+    "Annual crops associated with permanent crops", "Complex cultivation patterns",
+    "Land principally occupied by agriculture, with significant areas of natural vegetation",
+    "Agro-forestry areas", "Broad-leaved forest", "Coniferous forest", "Mixed forest",
+    "Natural grassland", "Moors and heathland", "Sclerophyllous vegetation",
+    "Transitional woodland/shrub", "Beaches, dunes, sands", "Bare rock", "Sparsely vegetated areas",
+    "Burnt areas", "Inland marshes", "Peatbogs", "Salt marshes", "Salines", "Intertidal flats",
     "Water courses", "Water bodies", "Coastal lagoons", "Estuaries", "Sea and ocean"
 ]
-
 class_to_idx = {label: i for i, label in enumerate(all_classes)}
-
 
 
 # ===== LOAD TEST LOCATIONS =====
@@ -90,11 +85,7 @@ test_dataset = BigEarthNetS2ClassifierDataset(
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=2)
 
 # ===== LOAD MODEL =====
-model = LinearProbeModel(
-    pretrained_path=None,  # no need to re-load encoder weights
-    in_channels=12,
-    num_classes=43
-).to(device)
+model = FineTuneModel(pretrained_path=None).to(device)
 model.load_state_dict(torch.load(model_path))
 model.eval()
 
@@ -137,10 +128,10 @@ import numpy as np
 predicted_any = np.any(y_pred_bin, axis=0)
 unpredicted_classes = np.where(predicted_any == 0)[0]
 print(f"Number of unpredicted classes: {len(unpredicted_classes)}")
-print("Classes with no predictions:", unpredicted_classes)
+print("Unpredicted class names:", [all_classes[i] for i in unpredicted_classes])
 
 
 # ===== LOG RESULTS TO FILE =====
-log_file = "lin_probe_results_log.csv"
+log_file = "ft_results_log.csv"
 with open(log_file, "a") as f:
     f.write(f"{subset}%,{f1_macro:.4f},{f1_micro:.4f},{precision_macro:.4f},{recall_macro:.4f}\n")

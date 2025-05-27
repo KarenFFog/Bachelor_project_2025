@@ -14,26 +14,32 @@ access_token = os.getenv("HF_TOKEN")
 
 n_loc = 100
 precisions = [0, 1, 2, 3, 4, 5, 6, 7]
-base_eval_dir = "results/experiment_1"
+base_eval_dir = "results/experiment_1_R1" #### choose round 1 or 2
 
-prompt_file_paths_des = ["prompts task #2.0/prompt1.txt",
-                         "prompts task #2.0/prompt2.txt",
-                         "prompts task #2.0/prompt3.txt",
-                         "prompts task #2.0/prompt4.txt",
+prompt_file_paths_R1 = ["prompts task #2/prompt1.txt",
+                         "prompts task #2/prompt2.txt",
+                         "prompts task #2/prompt3.txt",
+                         "prompts task #2/prompt4.txt",
+                         "prompts task #2/prompt5.txt",
+                         "prompts task #2/prompt6.txt",
+                         "prompts task #2/prompt7.txt",
+                         "prompts task #2/prompt8.txt"]
+
+
+prompt_file_paths_R2 = ["prompts task #2.0/prompt4.txt",
                          "prompts task #2.0/prompt5.txt",
                          "prompts task #2.0/prompt6.txt",
                          "prompts task #2.0/prompt7.txt",
                          "prompts task #2.0/prompt8.txt",
                          "prompts task #2.0/prompt9.txt",
                          "prompts task #2.0/prompt10.txt",
-                         "prompts task #2.0/prompt11.txt",
-                         "prompts task #2.0/prompt12.txt"]
+                         "prompts task #2.0/prompt11.txt"]
 
 prompt_list_des = []
-for p in prompt_file_paths_des:
+for p in prompt_file_paths_R1: #### choose round 1 or 2
     prompt_list_des.append(read_prompt(p))
 
-num_prompts = len(prompt_file_paths_des) 
+num_prompts = len(prompt_file_paths_R1) 
 # print(prompt_list_des)
 
 # === GENERATION ===

@@ -223,19 +223,69 @@ def do_stats(eval_dir, precisions, num_prompts, output_file=None):
 
 
 
+# def plot_mean_vs_precision(
+#     base_eval_dir, 
+#     prompt_names, 
+#     save_stats_path=None, 
+#     precisions=[0, 1, 2, 3, 4, 5, 6, 7], 
+#     title="Mean Count vs. Precision", 
+#     save_path=None):
+#     """
+#     Plot mean term count as a function of precision for each prompt.
+
+#     Args:
+#         stats (list): List of dicts with keys 'prompt_id', 'precision', 'mean', etc.
+#         prompt_names (list): list of prompt names for plot labels
+#         title (str): Title of the plot.
+#         save_path (str): Optional path to save the figure.
+#     """
+
+#     stats = do_stats(base_eval_dir, precisions, len(prompt_names), save_stats_path)
+    
+#     prompt_data = defaultdict(dict)
+#     for entry in stats:
+#         prompt_id = entry["prompt_id"]
+#         precision = entry["precision"]
+#         mean = entry["mean"]
+#         prompt_data[prompt_id][precision] = mean
+
+#     # Sort and plot
+#     plt.figure(figsize=(8, 5))
+#     for prompt_id, values in sorted(prompt_data.items()):
+#         precisions = sorted(values.keys())
+#         means = [values[p] for p in precisions]
+#         plt.plot(precisions, means, marker='o', label=f"Prompt {prompt_names[prompt_id-1]}")
+
+#     plt.xlabel("Precision")
+#     plt.ylabel("Mean Count of Geological Terms")
+#     plt.title(title)
+#     plt.xticks(sorted({entry['precision'] for entry in stats}))
+#     plt.grid(True)
+#     plt.legend()
+#     plt.tight_layout()
+
+#     if save_path:
+#         plt.savefig(save_path)
+#         print(f"Plot saved to {save_path}")
+#     plt.show()
+
 def plot_mean_vs_precision(
     base_eval_dir, 
     prompt_names, 
     save_stats_path=None, 
     precisions=[0, 1, 2, 3, 4, 5, 6, 7], 
     title="Mean Count vs. Precision", 
-    save_path=None):
+    save_path=None,
+    prompt_ids_to_plot=None  # New parameter
+):
     """
-    Plot mean term count as a function of precision for each prompt.
+    Plot mean term count as a function of precision for selected prompts.
 
     Args:
-        stats (list): List of dicts with keys 'prompt_id', 'precision', 'mean', etc.
-        prompt_names (list): list of prompt names for plot labels
+        base_eval_dir (str): Directory with evaluation results.
+        prompt_names (list): Full list of prompt names (e.g., ['R1-P1', 'R2-P5', ...])
+        prompt_ids_to_plot (list): List of prompt indices (1-based) to include, e.g., [1, 5, 9]
+        save_stats_path (str): Optional path to save intermediate stats.
         title (str): Title of the plot.
         save_path (str): Optional path to save the figure.
     """
@@ -249,15 +299,18 @@ def plot_mean_vs_precision(
         mean = entry["mean"]
         prompt_data[prompt_id][precision] = mean
 
-    # Sort and plot
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=(10, 6))
     for prompt_id, values in sorted(prompt_data.items()):
-        precisions = sorted(values.keys())
-        means = [values[p] for p in precisions]
-        plt.plot(precisions, means, marker='o', label=f"Prompt {prompt_names[prompt_id-1]}")
+        if prompt_ids_to_plot and prompt_id not in prompt_ids_to_plot:
+            continue  # Skip prompts not selected
 
-    plt.xlabel("Precision")
-    plt.ylabel("Mean Count of Geological Terms")
+        sorted_precisions = sorted(values.keys())
+        means = [values[p] for p in sorted_precisions]
+        label = f"{prompt_names[prompt_id - 1]}"  # -1 since list is 0-based
+        plt.plot(sorted_precisions, means, marker='o', label=label)
+
+    plt.xlabel("Coordinate Precision")
+    plt.ylabel("Mean Count of Geographic Terms")
     plt.title(title)
     plt.xticks(sorted({entry['precision'] for entry in stats}))
     plt.grid(True)
