@@ -455,7 +455,7 @@ def evaluate_top3_predictions(jsonl_path, top_k=3, plot=True):
 
 
 
-def plot_acc_vs_prec_one_k(acc_dir, precisions, k, prompts_id):
+def plot_acc_vs_prec_one_k(acc_dir, precisions, k, prompt_names, prompts_id):
     """
     Plots top-k accuracy vs. precision level for different prompts
 
@@ -486,7 +486,7 @@ def plot_acc_vs_prec_one_k(acc_dir, precisions, k, prompts_id):
     
     
     for i, prompt_id in enumerate(prompts_id):
-        label = f"Prompt {prompt_id}"
+        label = f"Prompt {prompt_names[prompt_id-1]}"
         plt.plot(precisions, accuracy_matrix[i], marker="o", label=label)
     
     plt.xlabel("Coordinate Precision Level")

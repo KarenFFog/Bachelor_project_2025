@@ -49,49 +49,14 @@ patience_counter = 0
 
 # === LABEL SETUP ===
 all_classes = [
-    "Continuous urban fabric",
-    "Discontinuous urban fabric",
-    "Industrial or commercial units",
-    "Road and rail networks and associated land",
-    "Port areas",
-    "Airports",
-    "Mineral extraction sites",
-    "Dump sites",
-    "Construction sites",
-    "Green urban areas",
-    "Sport and leisure facilities",
-    "Non-irrigated arable land",
-    "Permanently irrigated land",
-    "Rice fields",
-    "Vineyards",
-    "Fruit trees and berry plantations",
-    "Olive groves",
-    "Pastures",
-    "Annual crops associated with permanent crops",
-    "Complex cultivation patterns",
-    "Land principally occupied by agriculture, with significant areas of natural vegetation",
-    "Agro-forestry areas",
-    "Broad-leaved forest",
-    "Coniferous forest",
-    "Mixed forest",
-    "Natural grassland",
-    "Moors and heathland",
-    "Sclerophyllous vegetation",
-    "Transitional woodland/shrub",
-    "Beaches, dunes, sands",
-    "Bare rock",
-    "Sparsely vegetated areas",
-    "Burnt areas",
-    "Inland marshes",
-    "Peatbogs",
-    "Salt marshes",
-    "Salines",
-    "Intertidal flats",
-    "Water courses",
-    "Water bodies",
-    "Coastal lagoons",
-    "Estuaries",
-    "Sea and ocean"
+    "Continuous urban fabric", "Discontinuous urban fabric", "Industrial or commercial units", "Road and rail networks and associated land",
+    "Port areas", "Airports", "Mineral extraction sites", "Dump sites", "Construction sites", "Green urban areas",
+    "Sport and leisure facilities", "Non-irrigated arable land", "Permanently irrigated land", "Rice fields", "Vineyards",
+    "Fruit trees and berry plantations", "Olive groves", "Pastures", "Annual crops associated with permanent crops", "Complex cultivation patterns",
+    "Land principally occupied by agriculture, with significant areas of natural vegetation", "Agro-forestry areas",
+    "Broad-leaved forest", "Coniferous forest", "Mixed forest", "Natural grassland", "Moors and heathland", "Sclerophyllous vegetation",
+    "Transitional woodland/shrub", "Beaches, dunes, sands", "Bare rock", "Sparsely vegetated areas", "Burnt areas", "Inland marshes",
+    "Peatbogs", "Salt marshes", "Salines", "Intertidal flats", "Water courses", "Water bodies", "Coastal lagoons", "Estuaries", "Sea and ocean"
 ]
 
 class_to_idx = {label: i for i, label in enumerate(all_classes)}
@@ -137,7 +102,28 @@ criterion = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(model.classifier.parameters(), lr=1e-4)
 
 
-for epoch in range(epochs):
+# === LOAD CHECKPOINT IF EXISTS ===
+checkinfo_path = f"lin_prob_checkinfo_{subset}.json"
+start_epoch = 0
+
+if os.path.exists(f"best_lb_model_{subset}.pth"):
+    model.load_state_dict(torch.load(f"best_lb_model_{subset}.pth"))
+    print(f"Resumed model from checkpoint: best_lb_model_{subset}.pth", flush=True)
+
+if os.path.exists(checkinfo_path):
+    with open(checkinfo_path, "r") as f:
+        checkinfo = json.load(f)
+    best_val_loss = checkinfo["val_loss"]
+    start_epoch = checkinfo["epoch"] + 1
+    print(f"Resuming from epoch {start_epoch}", flush=True)
+else:
+    best_val_loss = float("inf")
+    patience_counter = 0
+    start_epoch = 0
+
+
+# === TRAINING LOOP ===
+for epoch in range(start_epoch, epochs):
     model.train()
     total_loss = 0
     for batch in tqdm(train_loader, desc=f"Epoch {epoch+1} [Train]"):

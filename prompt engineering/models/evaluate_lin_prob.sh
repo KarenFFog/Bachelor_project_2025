@@ -6,7 +6,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=8G
-#SBATCH --time=10:00:00
+#SBATCH --time=05:00:00
 
 # Activate your conda environment
 eval "$(/opt/software/anaconda3/2024.10-py3.12.7/bin/conda shell.bash hook)"
@@ -18,5 +18,5 @@ SUBSET=$1
 echo "Running eval on: $SUBSET pct"
 
 # Run Python evaluation script with argument
-python  evaluate_lin_prob.py $SUBSET
+python evaluate_lin_prob.py $SUBSET
 
