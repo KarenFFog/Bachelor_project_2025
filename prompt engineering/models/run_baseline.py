@@ -14,9 +14,10 @@ start = time.time()
 # === LOAD METADATA ===
 # Get the subset percentage from command-line argument
 subset = sys.argv[1]  # expects "1", "5", "10", or "100"
+seed = sys.argv[2] # seed, 42, 43, 44, 45 or 46
 
 # Determine the correct metadata file
-train_file = "metadata_train.jsonl" if subset == "100" else f"metadata_train_{subset}pct.jsonl"
+train_file = "metadata_train.jsonl" if subset == "100" else f"Subsets/metadata_train_{subset}pct_seed{seed}.jsonl"
 
 with open(train_file, "r") as f:
     train_locations = [json.loads(line)["location_name"] for line in f]
@@ -116,8 +117,6 @@ val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=4
 # === INIT MODEL ===
 model = BigEarthNetResNet50(in_channels=12, num_classes=43, pretrained=False).to(device)
 
-
-
 start_epoch = 0
 best_val_loss = float("inf")
 
@@ -130,6 +129,7 @@ print("model initialized", flush=True)
 epochs = 50
 patience_counter = 0
 patience = 3
+loss_history = []
 
 for epoch in range(epochs):
     model.train()
@@ -173,6 +173,12 @@ for epoch in range(epochs):
     avg_val_loss = val_loss / len(val_loader)
     print(f"Epoch {epoch+1}: Val Loss = {avg_val_loss:.4f}", flush=True)
 
+    loss_history.append({
+        "epoch": epoch + 1,
+        "train_loss": avg_loss,
+        "val_loss": avg_val_loss
+    })
+
     best_val_loss, patience_counter, should_stop = maybe_save_checkpoint(
             model=model, 
             val_loss=avg_val_loss, 
@@ -180,13 +186,16 @@ for epoch in range(epochs):
             patience_counter=patience_counter, 
             patience=patience, 
             epoch=epoch,
-            check_point_path=f"baseline_checkpoint_{subset}pct.json",
-            path=f"best_baseline_model_{subset}pct.pth"
+            check_point_path=f"Early_stopping/baseline_checkpoint_{subset}pct_seed{seed}.json",
+            path=f"Early_stopping/best_baseline_model_{subset}pct_seed{seed}.pth"
     )
 
     if should_stop:
         print("Early stopping triggered.", flush=True)
         break
+
+with open(f"Early_stopping/loss_history_{subset}pct_seed{seed}.json", "w") as f:
+    json.dump(loss_history, f, indent=2)
 
 print(f"Total training time: {(time.time() - start) / 60:.2f} minutes", flush=True)
 

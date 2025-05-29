@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=baseline_train
-#SBATCH --output=baseline_train_%j.out
-#SBATCH --error=baseline_train_%j.err
+#SBATCH --job-name=baseline_seed
+#SBATCH --output=baseline_%j.out
+#SBATCH --error=baseline_%j.err
 #SBATCH --partition=gpu             # Or 'cpu' if you're not using a GPU
 #SBATCH --gres=gpu:1                # Remove this line if using CPU only
 #SBATCH --cpus-per-task=4
@@ -14,8 +14,9 @@ conda activate geollm
 
 # Get the subset argument from command line
 SUBSET=$1
+SEED=$2
 
-echo "Running training with subset: $SUBSET"
+echo "Training baseline model on ${SUBSET}% subset (seed ${SEED})"
 
 # Run your Python training script with argument
-python run_baseline.py $SUBSET
+python run_baseline.py $SUBSET $SEED
