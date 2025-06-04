@@ -39,18 +39,18 @@ class LinearProbeModel(nn.Module):
         return self.classifier(feats)
 
 
-
-if len(sys.argv) < 2 or sys.argv[1] not in ["1", "5", "10", "100"]:
-    print("Usage: python script.py [1|5|10|100]")
-    sys.exit(1)
+#if len(sys.argv) < 3:
+    #print("Usage: python script.py [1|5|10|100] [seed]")
+    #sys.exit(1)
 
 # Get the subset percentage from command-line argument
-subset = sys.argv[1]  # expects "1", "5", "10", or "100"
-
+#subset = sys.argv[1]  # expects "1", "5", "10", or "100"
+#seed = sys.argv[2] # 42, 43, 44, 45, 46
 
 # ===== CONFIG =====
 root = "/home/fhd511/Geollm_project/BigEarthNet_data_train_s2/BigEarthNet-v1.0"
-model_path = f"best_lb_model_{subset}.pth"
+#model_path = f"Early_stopping/best_lin_model_{subset}pct_seed{seed}.pth"
+model_path = f"best_lb_model_100.pth"
 metadata_path = "metadata_test.jsonl"
 batch_size = 32
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -122,25 +122,29 @@ y_pred_bin = (y_pred > 0.5).astype(int)
 f1_macro = f1_score(y_true, y_pred_bin, average="macro")
 f1_micro = f1_score(y_true, y_pred_bin, average="micro")
 precision_macro = precision_score(y_true, y_pred_bin, average="macro")
+precision_micro = precision_score(y_true, y_pred_bin, average="micro")
 recall_macro = recall_score(y_true, y_pred_bin, average="macro")
+recall_micro = recall_score(y_true, y_pred_bin, average="micro")
 
-print("\n--- Evaluation on Test Set ---")
-print("F1 Score (macro):", f1_macro)
-print("F1 Score (micro):", f1_micro)
-print("Precision (macro):", precision_macro)
-print("Recall (macro):", recall_macro)
-
-
-# ===== ANALYZE UNPREDICTED CLASSES =====
-import numpy as np
-
+# ===== UNPREDICTED CLASSES =====
 predicted_any = np.any(y_pred_bin, axis=0)
 unpredicted_classes = np.where(predicted_any == 0)[0]
-print(f"Number of unpredicted classes: {len(unpredicted_classes)}")
-print("Classes with no predictions:", unpredicted_classes)
+unpredicted_names = [all_classes[i] for i in unpredicted_classes]
 
+# ===== SAVE TO FILE =====
+results = {
+    "f1_macro": f1_macro,
+    "f1_micro": f1_micro,
+    "precision_macro": precision_macro,
+    "precision_micro": precision_micro,
+    "recall_macro": recall_macro,
+    "recall_micro": recall_micro,
+    "unpredicted_class_count": len(unpredicted_classes),
+    "unpredicted_classes": unpredicted_names
+}
 
-# ===== LOG RESULTS TO FILE =====
-log_file = "lin_probe_results_log.csv"
-with open(log_file, "a") as f:
-    f.write(f"{subset}%,{f1_macro:.4f},{f1_micro:.4f},{precision_macro:.4f},{recall_macro:.4f}\n")
+#output_path = f"Early_stopping/Eval_results_lin/lin_eval_results_{subset}pct_seed{seed}.json"
+output_path = "Early_stopping/Eval_results_lin/lin_eval_results_100pct.json"
+with open(output_path, "w") as f:
+    json.dump(results, f, indent=2)
+

@@ -12,17 +12,18 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 import sys
 
-if len(sys.argv) < 3:
-    print("Usage: python script.py [1|5|10|100] [seed]")
-    sys.exit(1)
+#if len(sys.argv) < 3:
+    #print("Usage: python script.py [1|5|10|100] [seed]")
+    #sys.exit(1)
 
 # Get the subset percentage from command-line argument
-subset = sys.argv[1]  # expects "1", "5", "10", or "100"
-seed = sys.argv[2] # 42, 43, 44, 45, 46
+#subset = sys.argv[1]  # expects "1", "5", "10", or "100"
+#seed = sys.argv[2] # 42, 43, 44, 45, 46
 
 # ===== CONFIG =====
 root = "/home/fhd511/Geollm_project/BigEarthNet_data_train_s2/BigEarthNet-v1.0"
-model_path = f"Early_stopping/best_baseline_model_{subset}pct_seed{seed}.pth"
+model_path = "best_baseline_model_100pct.pth"
+#model_path = f"Early_stopping/best_baseline_model_{subset}pct_seed{seed}.pth"
 metadata_path = "metadata_test.jsonl"
 batch_size = 32
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -100,8 +101,7 @@ unpredicted_classes = np.where(predicted_any == 0)[0]
 unpredicted_names = [all_classes[i] for i in unpredicted_classes]
 
 # ===== SAVE TO FILE =====
-results = {
-    "subset": f"{subset}%",
+results = {  
     "f1_macro": f1_macro,
     "f1_micro": f1_micro,
     "precision_macro": precision_macro,
@@ -112,7 +112,8 @@ results = {
     "unpredicted_classes": unpredicted_names
 }
 
-output_path = f"eval_results_{subset}pct_seed{seed}.json"
+#output_path = f"Early_stopping/Eval_results/eval_results_{subset}pct_seed{seed}.json"
+output_path = "Early_stopping/Eval_results/eval_results_100pct.json"
 with open(output_path, "w") as f:
     json.dump(results, f, indent=2)
 

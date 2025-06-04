@@ -6,7 +6,7 @@
 #SBATCH --gres=gpu:a100:1       # Remove this line if using CPU only
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=16G
-#SBATCH --time=12:00:00
+#SBATCH --time=09:00:00
 
 # Load and activate your conda environment
 eval "$(/opt/software/anaconda3/2024.10-py3.12.7/bin/conda shell.bash hook)"
@@ -14,8 +14,9 @@ conda activate geollm
 
 # Get the subset argument from command line
 SUBSET=$1
+SEED=$2
 
-echo "Running training with subset: $SUBSET"
+echo "Training lin model with subset: ${SUBSET}% (seed ${SEED})"
 
 # Run python script, pass subset percentage (1, 5, 10 or 100)
-python linear_prob.py $SUBSET
+python linear_prob.py $SUBSET $SEED

@@ -65,9 +65,10 @@ class_to_idx = {label: i for i, label in enumerate(all_classes)}
 # === LOAD METADATA ===
 # Get the subset percentage from command-line argument
 subset = sys.argv[1]  # expects "1", "5", "10", or "100"
+seed = sys.argv[2] # seed, 42, 43, 44, 45 or 46
 
 # Determine the correct metadata file
-train_file = "metadata_train.jsonl" if subset == "100" else f"metadata_train_{subset}pct.jsonl"
+train_file = "metadata_train.jsonl" if subset == "100" else f"Subsets/metadata_train_{subset}pct_seed{seed}.jsonl"
 
 # Load training locations
 with open(train_file, "r") as f:
@@ -102,27 +103,14 @@ criterion = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(model.classifier.parameters(), lr=1e-4)
 
 
-# === LOAD CHECKPOINT IF EXISTS ===
-checkinfo_path = f"lin_prob_checkinfo_{subset}.json"
-start_epoch = 0
-
-if os.path.exists(f"best_lb_model_{subset}.pth"):
-    model.load_state_dict(torch.load(f"best_lb_model_{subset}.pth"))
-    print(f"Resumed model from checkpoint: best_lb_model_{subset}.pth", flush=True)
-
-if os.path.exists(checkinfo_path):
-    with open(checkinfo_path, "r") as f:
-        checkinfo = json.load(f)
-    best_val_loss = checkinfo["val_loss"]
-    start_epoch = checkinfo["epoch"] + 1
-    print(f"Resuming from epoch {start_epoch}", flush=True)
-else:
-    best_val_loss = float("inf")
-    patience_counter = 0
-    start_epoch = 0
-
-
 # === TRAINING LOOP ===
+epochs = 50
+patience_counter = 0
+patience = 3
+start_epoch = 0
+best_val_loss = float("inf")
+loss_history = []
+
 for epoch in range(start_epoch, epochs):
     model.train()
     total_loss = 0
@@ -138,7 +126,8 @@ for epoch in range(start_epoch, epochs):
         optimizer.step()
         total_loss += loss.item()
     
-    print(f"Epoch {epoch+1}: Train Loss = {total_loss / len(train_loader):.4f}", flush=True)
+    avg_loss = total_loss / len(train_loader)
+    print(f"Epoch {epoch+1}: Loss = {avg_loss:.4f}", flush=True)
     print(f"{len(train_loader)}", flush=True)
 
 
@@ -154,7 +143,14 @@ for epoch in range(start_epoch, epochs):
 
     avg_val_loss = val_loss / len(val_loader)
     print(f"Epoch {epoch+1}: Val Loss = {avg_val_loss:.4f}", flush=True)
-	
+    
+    loss_history.append({
+        "epoch": epoch + 1,
+        "train_loss": avg_loss,
+        "val_loss": avg_val_loss
+    })
+
+
     best_val_loss, patience_counter, should_stop = maybe_save_checkpoint(
         model=model, 
         val_loss=avg_val_loss, 
@@ -162,16 +158,15 @@ for epoch in range(start_epoch, epochs):
         patience_counter=patience_counter, 
         patience=patience, 
         epoch=epoch,
-	check_point_path = f"lin_prob_checkinfo_{subset}.json",
-        path=f"best_lb_model_{subset}.pth"
+	check_point_path = f"Early_stopping/lin_checkpoint_{subset}pct_seed{seed}.json",
+        path=f"Early_stopping/best_lin_model_{subset}pct_seed{seed}.pth"
     )
 
     if should_stop:
         print("Early stopping triggered.", flush=True)
         break
-
-# evaluate on test set
-
-# plot results (% of train used, F1 score)
+    
+with open(f"Early_stopping/lin_loss_history_{subset}pct_seed{seed}.json", "w") as f:
+    json.dump(loss_history, f, indent=2)
 
 

@@ -38,6 +38,7 @@ class FineTuneModel(nn.Module):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 root = "/home/fhd511/Geollm_project/BigEarthNet_data_train_s2/BigEarthNet-v1.0"
 batch_size = 32
+start_epoch = 0
 epochs = 50
 patience = 3
 best_val_loss = float("inf")
@@ -66,9 +67,10 @@ class_to_idx = {label: i for i, label in enumerate(all_classes)}
 # === LOAD METADATA ===
 # Get the subset percentage from command-line argument
 subset = sys.argv[1]  # expects "1", "5", "10", or "100"
+seed = sys.argv[2] 
 
 # Determine the correct metadata file
-train_file = "metadata_train.jsonl" if subset == "100" else f"metadata_train_{subset}pct.jsonl"
+train_file = "metadata_train.jsonl" if subset == "100" else f"Subsets/metadata_train_{subset}pct_seed{seed}.jsonl"
 
 # Load training locations
 with open(train_file, "r") as f:
@@ -105,6 +107,8 @@ optimizer = torch.optim.Adam([
     {'params': model.classifier.parameters(), 'lr': 1e-4}
 ])
 
+# === TRAINING LOOP ===
+loss_history = []
 
 for epoch in range(epochs):
     model.train()
@@ -120,8 +124,9 @@ for epoch in range(epochs):
         loss.backward()
         optimizer.step()
         total_loss += loss.item()
-
-    print(f"Epoch {epoch+1}: Train Loss = {total_loss / len(train_loader):.4f}", flush=True)
+    
+    avg_loss = total_loss / len(train_loader)
+    print(f"Epoch {epoch+1}: Loss = {avg_loss:.4f}", flush=True)
     print(f"{len(train_loader)}", flush=True)
 
 
@@ -138,6 +143,12 @@ for epoch in range(epochs):
     avg_val_loss = val_loss / len(val_loader)
     print(f"Epoch {epoch+1}: Val Loss = {avg_val_loss:.4f}", flush=True)
 
+    loss_history.append({
+        "epoch": epoch + 1,
+        "train_loss": avg_loss,
+        "val_loss": avg_val_loss
+    })
+
     best_val_loss, patience_counter, should_stop = maybe_save_checkpoint(
         model=model,
         val_loss=avg_val_loss,
@@ -145,10 +156,14 @@ for epoch in range(epochs):
         patience_counter=patience_counter,
         patience=patience,
         epoch=epoch,
-	check_point_path = f"fine_tune_checkinfo_{subset}pct.json",
-        path=f"best_ft_model_{subset}pct.pth"
+	check_point_path = f"Early_stopping/ft_checkpoint_{subset}pct_seed{seed}.json",
+        path=f"Early_stopping/best_ft_model_{subset}pct_seed{seed}.pth"
     )
 
     if should_stop:
         print("Early stopping triggered.", flush=True)
         break
+
+with open(f"Early_stopping/ft_loss_history_{subset}pct_seed{seed}.json", "w") as f:
+    json.dump(loss_history, f, indent=2)
+
