@@ -1,1 +1,0 @@
-Describe the natural landscape found at this location: {coords}. Include details about the terrain, plant cover, wildlife, climate and any notable geographical features.
