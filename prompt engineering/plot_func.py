@@ -552,7 +552,6 @@ def plot_acc_vs_prec_one_k(acc_dir, precisions, k, prompt_names, prompts_id):
 
 
 def collect_accuracy_verbosity_data(base_dir_mean, base_dir_acc, prompt_ids, precisions, top_k=3, stats_path="stats_test.jsonl"):
-    ):
     """
     Collects accuracy and verbosity statistics across multiple prompts and precision levels.
 
