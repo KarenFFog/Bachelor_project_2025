@@ -4,7 +4,7 @@ from rasterio.warp import transform_bounds
 import folium
 from folium.raster_layers import ImageOverlay
 import numpy as np
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 from matplotlib.cm import get_cmap
 import jsonlines
 import numpy as np
@@ -36,6 +36,7 @@ from collections import Counter
 import textwrap
 from sklearn.metrics import precision_score, recall_score, f1_score
 import warnings
+
 
 from eval import *
 from gen import * 
@@ -179,10 +180,93 @@ def plot_true_label_distribution(jsonl_path, save_img_path, title="True Label Di
 
 
 
+def load_counts_per_group(eval_dir, precisions, num_prompts):
+    """
+    Loads geo term count values from result files across different prompts and precision levels.
+
+    Args:
+        eval_dir (str): Path to the base evaluation directory containing subfolders named by precision (e.g., 'precision_1').
+        precisions (list): List of precision values to process (e.g., [1, 2, 3]).
+        num_prompts (int): Number of prompts to iterate over.
+    """
+
+    eval_dir = Path(eval_dir)
+    boxplot_data = {}
+
+    for prompt_id in range(1, num_prompts + 1):
+        for precision in precisions:
+            label = f"Prompt {prompt_id}"
+            result_file = eval_dir / f"precision_{precision}" / f"results_prompt_{prompt_id}.jsonl"
+            if not result_file.exists():
+                print("not found")
+                continue
+
+            with result_file.open("r", encoding="utf-8") as f:
+                counts = [json.loads(line).get("geo term count", 0) for line in f]
+
+            boxplot_data[label] = counts
+
+    return boxplot_data
+
+
+
+
+def plot_boxplot(count_data, labels, title, box_colors=None):
+    """
+    Plots boxplot of geographic term counts for different prompt variants.
+
+    Args:
+        count_data (dict): Dictionary where keys are prompt labels and values are lists of geographic term counts (could be made using load_counts_per_group)
+        labels (list): List of labels for the x-axis corresponding to each box.
+        title (str): Title of the plot.
+        box_colors (list, optional): List of colors for the boxes.
+    """
+    
+    data = list(count_data.values())
+    num_boxes = len(data)
+
+    plt.figure(figsize=(max(12, num_boxes * 1.2), 6))
+    boxprops = dict(linewidth=1.5)
+
+    # Create the boxplot
+    bp = plt.boxplot(data, patch_artist=True, labels=labels, showfliers=True, boxprops=boxprops)
+
+    # Default to colorblind-friendly colors if none provided
+    if box_colors is None:
+        default_colors = plt.get_cmap("tab20").colors  # 20 distinct colors
+        box_colors = [default_colors[i % len(default_colors)] for i in range(num_boxes)]
+
+    # Apply colors to each box
+    for patch, color in zip(bp["boxes"], box_colors):
+        patch.set_facecolor(color)
+        patch.set_alpha(0.6)
+
+    # Optional: color medians or whiskers too
+    for median in bp["medians"]:
+        median.set_color("black")
+
+    plt.xticks(rotation=45, ha='right', fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.ylabel("Number of Geographic Terms", fontsize=16)
+    plt.xlabel("Prompt Variant", fontsize=16)
+    plt.title(title, fontsize=18)
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+
+
 def do_stats(eval_dir, precisions, num_prompts, output_file=None):
     """
     Compute and collect statistics for each prompt across precision levels.
+
+    Args:
+        eval_dir (str): Path to the base evaluation directory containing subfolders named by precision (e.g., 'precision_1').
+        precisions (list): List of precision values to include in the analysis.
+        num_prompts (int): Number of prompts to process
+        output_file (str, optional): If provided, saves the computed statistics as a JSON file at this location.
     """
+    
     eval_dir = Path(eval_dir)
     prompt_stats = []
 
@@ -198,7 +282,7 @@ def do_stats(eval_dir, precisions, num_prompts, output_file=None):
             with result_file.open("r", encoding="utf-8") as f:
                 for line in f:
                     data = json.loads(line)
-                    counts.append(data.get("geo term count", 0))
+                    counts.append(data.get("geo term count", 0)) 
 
             if counts:
                 stats = {
@@ -223,52 +307,6 @@ def do_stats(eval_dir, precisions, num_prompts, output_file=None):
 
 
 
-# def plot_mean_vs_precision(
-#     base_eval_dir, 
-#     prompt_names, 
-#     save_stats_path=None, 
-#     precisions=[0, 1, 2, 3, 4, 5, 6, 7], 
-#     title="Mean Count vs. Precision", 
-#     save_path=None):
-#     """
-#     Plot mean term count as a function of precision for each prompt.
-
-#     Args:
-#         stats (list): List of dicts with keys 'prompt_id', 'precision', 'mean', etc.
-#         prompt_names (list): list of prompt names for plot labels
-#         title (str): Title of the plot.
-#         save_path (str): Optional path to save the figure.
-#     """
-
-#     stats = do_stats(base_eval_dir, precisions, len(prompt_names), save_stats_path)
-    
-#     prompt_data = defaultdict(dict)
-#     for entry in stats:
-#         prompt_id = entry["prompt_id"]
-#         precision = entry["precision"]
-#         mean = entry["mean"]
-#         prompt_data[prompt_id][precision] = mean
-
-#     # Sort and plot
-#     plt.figure(figsize=(8, 5))
-#     for prompt_id, values in sorted(prompt_data.items()):
-#         precisions = sorted(values.keys())
-#         means = [values[p] for p in precisions]
-#         plt.plot(precisions, means, marker='o', label=f"Prompt {prompt_names[prompt_id-1]}")
-
-#     plt.xlabel("Precision")
-#     plt.ylabel("Mean Count of Geological Terms")
-#     plt.title(title)
-#     plt.xticks(sorted({entry['precision'] for entry in stats}))
-#     plt.grid(True)
-#     plt.legend()
-#     plt.tight_layout()
-
-#     if save_path:
-#         plt.savefig(save_path)
-#         print(f"Plot saved to {save_path}")
-#     plt.show()
-
 def plot_mean_vs_precision(
     base_eval_dir, 
     prompt_names, 
@@ -284,10 +322,11 @@ def plot_mean_vs_precision(
     Args:
         base_eval_dir (str): Directory with evaluation results.
         prompt_names (list): Full list of prompt names (e.g., ['R1-P1', 'R2-P5', ...])
-        prompt_ids_to_plot (list): List of prompt indices (1-based) to include, e.g., [1, 5, 9]
         save_stats_path (str): Optional path to save intermediate stats.
+        precisions (list): List of precision values to include in the analysis.
         title (str): Title of the plot.
         save_path (str): Optional path to save the figure.
+        prompt_ids_to_plot (list): List of prompt indices to include, e.g., [1, 5, 9]
     """
 
     stats = do_stats(base_eval_dir, precisions, len(prompt_names), save_stats_path)
@@ -333,6 +372,7 @@ def plot_acc_vs_prec_one_prompt(acc_dir, precisions, ks, prompt):
         ks (list): List of top-k's
         prompt (int): number of prompt
     """
+    
     acc_dir = Path(acc_dir)
     accuracy_matrix = []
     
@@ -367,6 +407,15 @@ def plot_acc_vs_prec_one_prompt(acc_dir, precisions, ks, prompt):
 
 
 def evaluate_top3_predictions(jsonl_path, top_k=3, plot=True):
+    """
+    Evaluates top-k predicted labels against true labels for multi-label classification tasks.
+
+    Args:
+        jsonl_path (str): Path to a JSONL file where each line is a dictionary containing 'true labels' and 'sentence_analysis' with 'top_labels' predictions.
+        top_k (int): Number of top predictions to consider for evaluation (default is 3).
+        plot (bool): If True, displays a bar chart comparing the top predicted vs true labels.
+    """
+    
     data = read_jsonl(jsonl_path)
 
     total = 0
@@ -457,13 +506,16 @@ def evaluate_top3_predictions(jsonl_path, top_k=3, plot=True):
 
 def plot_acc_vs_prec_one_k(acc_dir, precisions, k, prompt_names, prompts_id):
     """
-    Plots top-k accuracy vs. precision level for different prompts
+    Plots top-k accuracy versus precision level for different prompts.
 
     Args:
-        precisions (list): List of precisions e.g. [0, 1, 2, 3, 4, 5]
-        k (int): top-k
-        prompts_id (list): List of prompt ids
+        acc_dir (str): Path to the base directory containing prediction results in subfolders named by precision level (e.g., 'precision_3').
+        precisions (list): List of precision levels to evaluate (e.g., [0, 1, 2, 3, 4, 5]).
+        k (int): Number of top predictions to consider when computing accuracy (e.g., top-3).
+        prompt_names (list): List of prompt names.
+        prompts_id (list): List of prompt IDs to include in the plot (e.g. [1, 3, 7]).
     """
+    
     acc_dir = Path(acc_dir)
     accuracy_matrix = []
     
@@ -498,79 +550,139 @@ def plot_acc_vs_prec_one_k(acc_dir, precisions, k, prompt_names, prompts_id):
     plt.show()
 
 
+
 def collect_accuracy_verbosity_data(base_dir_mean, base_dir_acc, prompt_ids, precisions, top_k=3, stats_path="stats_test.jsonl"):
+    ):
     """
-    Collect accuracy and verbosity (mean term count) data.
-    
+    Collects accuracy and verbosity statistics across multiple prompts and precision levels.
+
+    Args:
+        base_dir_mean (str): Path to the directory containing evaluation results used for computing verbosity stats.
+        base_dir_acc (str): Path to the directory containing predicted label files for computing accuracy.
+        prompt_ids (list): List of prompt IDs to include in the analysis.
+        precisions (list): List of precision levels to evaluate (e.g., [0, 1, 2, 3]).
+        top_k (int): Number of top predictions to consider when computing accuracy (default is 3).
+        stats_path (str): Path to save the verbosity statistics as a JSON file.
+
     Returns:
-        accuracy_matrix: 2D list [prompt][precision]
-        verbosity_matrix: 2D list [prompt][precision]
+        tuple: Four NumPy arrays of shape [n_prompts, n_precisions]:
+            - accuracy_matrix (np.ndarray): Top-k accuracy values for each prompt/precision pair.
+            - verbosity_matrix (np.ndarray): Mean "geo term count" (verbosity) for each prompt/precision pair.
+            - accuracy_se_matrix (np.ndarray): Standard error of accuracy for each prompt/precision pair.
+            - verbosity_std_matrix (np.ndarray): Standard deviation of "geo term count" for each prompt/precision pair.
     """
+    
     verbosity_data = do_stats(base_dir_mean, precisions, len(prompt_ids), stats_path)
 
     acc_dir = Path(base_dir_acc)
     accuracy_matrix = []
     verbosity_matrix = []
+    accuracy_se_matrix = []
+    verbosity_std_matrix = []
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=UserWarning)
         for prompt_id in prompt_ids:
             accuracy_row = []
+            accuracy_se_row = []
             verbosity_row = []
+            verbosity_std_row = []
             for precision in precisions:
                 # Accuracy
                 path = acc_dir / f"precision_{precision}" / f"predicted_labels_{prompt_id}.jsonl"
                 res = evaluate_top3_predictions(path, top_k=top_k, plot=False)
-                accuracy_row.append(res["accuracy"])
-    
+                acc = res["accuracy"]
+                n = res.get("total_samples", 100)  # Adjust this if needed
+                se = np.sqrt(acc * (1 - acc) / n)
+
+                accuracy_row.append(acc)
+                accuracy_se_row.append(se)
+
                 # Verbosity
                 v_entry = next((v for v in verbosity_data if v['prompt_id'] == prompt_id and v['precision'] == precision), None)
-                verbosity_row.append(v_entry['mean'] if v_entry else np.nan)
-    
+                if v_entry:
+                    verbosity_row.append(v_entry['mean'])
+                    verbosity_std_row.append(v_entry['std'])
+                else:
+                    verbosity_row.append(np.nan)
+                    verbosity_std_row.append(np.nan)
+
             accuracy_matrix.append(accuracy_row)
+            accuracy_se_matrix.append(accuracy_se_row)
             verbosity_matrix.append(verbosity_row)
+            verbosity_std_matrix.append(verbosity_std_row)
 
-    return np.array(accuracy_matrix), np.array(verbosity_matrix)
-
+    return (
+        np.array(accuracy_matrix), 
+        np.array(verbosity_matrix),
+        np.array(accuracy_se_matrix),
+        np.array(verbosity_std_matrix)
+)
 
 
 def plot_accuracy_vs_mean(accuracy_matrix, 
-                            verbosity_matrix, 
-                            prompt_ids, 
-                            prompt_names=None, 
-                            precisions=None, 
-                            top_k=3, 
-                            title=None):
+                          verbosity_matrix, 
+                          prompt_ids, 
+                          prompt_names=None, 
+                          precisions=None, 
+                          top_k=3, 
+                          title=None,
+                          accuracy_se_matrix=None,
+                          verbosity_std_matrix=None):
+    """
+    Plots Top-k accuracy against mean geo-term count for each prompt, with optional error bars and precision annotations.
+
+    Args:
+        accuracy_matrix (np.ndarray): 2D array [n_prompts x n_precisions] of Top-k accuracy values.
+        verbosity_matrix (np.ndarray): 2D array [n_prompts x n_precisions] of mean geo-term counts.
+        prompt_ids (list): List of prompt IDs used to determine line colors and order.
+        prompt_names (list, optional): List of prompt names; if None, uses "Prompt <id>".
+        precisions (list, optional): List of precision levels to annotate on the plot.
+        top_k (int): Value of k used in Top-k accuracy (used in title).
+        title (str, optional): Custom title for the plot.
+        accuracy_se_matrix (np.ndarray, optional): 2D array of standard errors for accuracy values.
+        verbosity_std_matrix (np.ndarray, optional): 2D array of standard deviations for geo-term counts.
+    """
+
     plt.figure(figsize=(8, 5))
     plt.style.use("seaborn-v0_8-colorblind")
 
-    # create colormap with at least 12 distinct colors
+    # colormap
     cmap = get_cmap("tab20") 
     num_colors = len(prompt_ids)
     colors = [cmap(i % cmap.N) for i in range(num_colors)]
-    
+
     if prompt_names is None:
         prompt_names = [f"Prompt {pid}" for pid in prompt_ids]
 
     for i, (acc_row, verb_row) in enumerate(zip(accuracy_matrix, verbosity_matrix)):
         label = prompt_names[i]
         color = colors[i]
-        plt.scatter(verb_row, acc_row, marker="o", label=label, color=color)
 
-        # Annotate each point with its precision value
+        # Use error bars if provided, else None
+        acc_err = accuracy_se_matrix[i] if accuracy_se_matrix is not None else None
+        verb_err = verbosity_std_matrix[i] if verbosity_std_matrix is not None else None
+
+        # Plot with error bars
+        plt.errorbar(verb_row, acc_row, 
+                     yerr=acc_err, xerr=verb_err,
+                     fmt="o", label=label, color=color,
+                     capsize=3, elinewidth=1, markeredgewidth=1)
+
+        # Annotate with precision if provided
         if precisions is not None:
             for x, y, p in zip(verb_row, acc_row, precisions):
                 plt.annotate(f"p={p}", (x, y), textcoords="offset points", xytext=(5, 5), ha='left', fontsize=8)
 
-    plt.xlabel("Mean Geo-term Count", fontsize=14)
-    plt.ylabel("Accuracy", fontsize=14)
-    plt.title(title or f"Accuracy vs. Verbosity (Top-{top_k} Predictions)", fontsize=15)
+    plt.xlabel("Mean Geo-term Count per Description", fontsize=14)
+    plt.ylabel("Top-3 Prediction Accuracy", fontsize=14)
+    plt.title(title or f"Accuracy vs. Geo count frequency (Top-{top_k} Predictions)", fontsize=15)
 
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
-    plt.ylim(0.0, 0.5)
-
-    plt.legend(title="Prompt", bbox_to_anchor=(1.05, 1), fontsize=10, loc='upper left')
+    plt.ylim(0.0, 0.55)
+    plt.xlim(0.0, 18.0)
     plt.grid(True)
+    plt.legend(title="Prompt", bbox_to_anchor=(1.05, 1), fontsize=12, loc='upper left')
     plt.tight_layout()
     plt.show()

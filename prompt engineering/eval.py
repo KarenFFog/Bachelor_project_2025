@@ -204,67 +204,6 @@ def verbosity_test(prompt, geo_terms, data_path, n_loc, model_name, token, eval_
 
 
 
-
-# def verbosity_test_up(prompts, geo_terms, data_path, n_loc, model_name, token, eval_dir):
-#     """
-#     Prompt model with multiple prompts for n different locations, save results separately.
-
-#     Args:
-#         prompts (list): List of prompt templates (e.g., 8 different prompts).
-#         geo_terms (list): List of geological terms.
-#         data_path (str): Path to data JSONL file with coordinates.
-#         n_loc (int): Number of locations to test.
-#         model_name (str): Model name (e.g., "llama 3.2").
-#         token (str): Hugging Face token.
-#         eval_dir (str): Directory to save separate result files.
-#     """
-
-#     # Load model
-#     model, tokenizer = load_model(model_name, token)
-
-#     # Move model to GPU if available
-#     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-#     model.to(device)
-
-#     # Load data
-#     data_points = read_jsonl(data_path)
-
-#     # Ensure n_loc does not exceed available data
-#     n_loc = min(n_loc, len(data_points))
-
-#     for p_idx, prompt in enumerate(prompts):
-#         results = []
-#         output_file = f"{eval_dir}/results_prompt_{p_idx+1}.jsonl"
-
-#         for i in range(n_loc):
-#             # Insert coordinates into the prompt
-#             prompt_with_coords = insert_coordinates(prompt, data_points[i])
-
-#             print(f"Processing Prompt {p_idx+1}, Location {i+1}: {prompt_with_coords}")
-
-#             # Generate response
-#             response = generate_response(model, tokenizer, prompt_with_coords)
-
-#             if response is not None:
-#                 count, matches = count_geo_terms(response, geo_terms)
-#             else:
-#                 count, matches = 0, []
-
-#             # Store results
-#             results.append({
-#                 "location": i+1,
-#                 "response": response,
-#                 "count": count
-#             })
-
-#         # Save results for this prompt in a separate JSONL file
-#         with open(output_file, "w", encoding="utf-8") as file:
-#             for res in results:
-#                 file.write(json.dumps(res) + "\n")
-
-#         print(f"Results for Prompt {p_idx+1} saved to {output_file}.")
-
-
 def verbosity_test_up(prompts, geo_terms, data_path, n_loc, model_name, token, eval_dir, precision):
     """
     Prompt model with multiple prompts for n different locations, save results separately.
@@ -323,62 +262,7 @@ def verbosity_test_up(prompts, geo_terms, data_path, n_loc, model_name, token, e
 
 
 
-# def generate_describtions(prompts, data_path, n_loc, model_name, token, eval_dir, add):
-#     """
-#     Prompt model with multiple prompts for n different locations, save results separately.
 
-#     Args:
-#         prompts (list): List of prompt templates (e.g., 8 different prompts).
-#         data_path (str): Path to data JSONL file with coordinates.
-#         n_loc (int): Number of locations to test.
-#         model_name (str): Model name (e.g., "llama 3.2").
-#         token (str): Hugging Face token.
-#         eval_dir (str): Directory to save separate result files.
-#     """
-
-#     # Load model
-#     model, tokenizer = load_model(model_name, token)
-
-#     # Move model to GPU if available
-#     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-#     model.to(device)
-
-#     # Load data
-#     data_points = read_jsonl(data_path)
-
-#     # Ensure n_loc does not exceed available data
-#     n_loc = min(n_loc, len(data_points))
-
-#     for p_idx, prompt in enumerate(prompts):
-#         results = []
-#         output_file = f"{eval_dir}/results_best_prompt_2dec_{p_idx}_{add}.jsonl"
-
-#         for i in range(n_loc):
-#             # Insert coordinates into the prompt
-#             prompt_with_coords = insert_coordinates(prompt, data_points[i])
-#             labels = data_points[i]['labels']
-
-#             print(f"Processing Prompt {p_idx+1}, Location {i+1}: {prompt_with_coords}")
-
-#             # Generate response
-#             response = generate_response(model, tokenizer, prompt_with_coords)
-
-#             # Store results
-#             results.append({
-#                 "location": i+1,
-#                 "response": response,
-#                 "labels": labels,
-#             })
-
-#         # Save results for this prompt in a separate JSONL file
-#         with open(output_file, "w", encoding="utf-8") as file:
-#             for res in results:
-#                 file.write(json.dumps(res) + "\n")
-
-#         print(f"Results for Prompt {p_idx+1} saved to {output_file}.")
-
-
-# EDITED - ORIGINAL ABOVE
 def generate_descriptions(prompts, data_path, n_loc, model_name, token, eval_dir, add):
     """
     Prompt model with multiple prompts for n different locations, save results separately.
@@ -430,33 +314,3 @@ def generate_descriptions(prompts, data_path, n_loc, model_name, token, eval_dir
                 file.write(json.dumps(res) + "\n")
 
         print(f"Results for Prompt {p_idx + 1} saved to {output_file}")
-
-
-
-
-
-
-
-
-
-
-def find_nearest_habitation(prompt_file_path, f_file_path, t_file_path):
-    """
-    Finds the nearest habitation for all places in the data,
-    
-    """
-    # read data
-    places_data = read_jsonl(f_file_path)
-    prompt = read_prompt(prompt_file_path)
-
-    for place in places_data:
-        # generate coordinates 
-        prompt_with_coords = insert_place(prompt, place)
-        response = generate_response(prompt_with_coords)
-        
-        # extract the name of the nearest habitation
-        # ??
-    
-    # Save the updated data
-    add_and_save_data(places_data, t_file_path)
-

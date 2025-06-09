@@ -66,6 +66,8 @@ class_to_idx = {label: i for i, label in enumerate(all_classes)}
 # Get the subset percentage from command-line argument
 subset = sys.argv[1]  # expects "1", "5", "10", or "100"
 seed = sys.argv[2] # seed, 42, 43, 44, 45 or 46
+l_r = float(sys.argv[3]) # learning rate
+
 
 # Determine the correct metadata file
 train_file = "metadata_train.jsonl" if subset == "100" else f"Subsets/metadata_train_{subset}pct_seed{seed}.jsonl"
@@ -100,7 +102,7 @@ model = LinearProbeModel(pretrained_path="best_pretrain_model.pth").to(device) #
 print(f"Model loaded", flush=True)
 
 criterion = nn.BCEWithLogitsLoss()
-optimizer = torch.optim.Adam(model.classifier.parameters(), lr=1e-4)
+optimizer = torch.optim.Adam(model.classifier.parameters(), lr=l_r)
 
 
 # === TRAINING LOOP ===
@@ -158,15 +160,15 @@ for epoch in range(start_epoch, epochs):
         patience_counter=patience_counter, 
         patience=patience, 
         epoch=epoch,
-	check_point_path = f"Early_stopping/lin_checkpoint_{subset}pct_seed{seed}.json",
-        path=f"Early_stopping/best_lin_model_{subset}pct_seed{seed}.pth"
+	check_point_path = f"Early_stopping/lin_checkpoint_{subset}pct_seed{seed}_lr{l_r}.json",
+        path=f"Early_stopping/best_lin_model_{subset}pct_seed{seed}_lr{l_r}.pth"
     )
 
     if should_stop:
         print("Early stopping triggered.", flush=True)
         break
     
-with open(f"Early_stopping/lin_loss_history_{subset}pct_seed{seed}.json", "w") as f:
+with open(f"Early_stopping/lin_loss_history_{subset}pct_seed{seed}_lr{l_r}.json", "w") as f:
     json.dump(loss_history, f, indent=2)
 
 

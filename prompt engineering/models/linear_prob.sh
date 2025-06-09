@@ -15,8 +15,9 @@ conda activate geollm
 # Get the subset argument from command line
 SUBSET=$1
 SEED=$2
+LR=$3
 
 echo "Training lin model with subset: ${SUBSET}% (seed ${SEED})"
 
 # Run python script, pass subset percentage (1, 5, 10 or 100)
-python linear_prob.py $SUBSET $SEED
+python linear_prob.py $SUBSET $SEED $LR

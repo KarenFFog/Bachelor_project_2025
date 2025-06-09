@@ -13,12 +13,13 @@ eval "$(/opt/software/anaconda3/2024.10-py3.12.7/bin/conda shell.bash hook)"
 conda activate geollm
 
 # Get the subset argument from command line
-#SUBSET=$1
-#SEED=$2
+SUBSET=$1
+SEED=$2
+LR=$3
 
-#echo "Evaluating lin model ${SUBSET}% subset (seed ${SEED})"
+echo "Evaluating lin model ${SUBSET}% subset (seed ${SEED}, lr ${LR})"
 
 # Run Python evaluation script with argument
-#python evaluate_lin_prob.py $SUBSET $SEED
-python evaluate_lin_prob.py
+python evaluate_lin_prob.py $SUBSET $SEED $LR
+#python evaluate_lin_prob.py
 

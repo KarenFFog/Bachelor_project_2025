@@ -47,16 +47,6 @@ def read_prompt(file_path):
     return content
 
 
-# def insert_coordinates(prompt: str, place: dict, placeholder: str = "{coords}"):
-#   """ 
-#   Inserts latitude and longitude into the given prompt at a specific placeholder.
-#   """
-#   lat = place['latitude']
-#   lon = place['longitude']
-#   coords_str = f"{lat}, {lon}"
-#   return prompt.replace(placeholder, coords_str)
-
-
 def insert_coordinates(prompt: str, place: dict, precision, key: str = "center", placeholder: str = "{coords}"):
     """ 
     Inserts latitude and longitude into the given prompt at a specific placeholder.
@@ -110,6 +100,7 @@ def load_model(name: str, token: str):
     
     return model, tokenizer
 
+
 # updated version 
 def load_model_up(name: str, token: str):
     """
@@ -133,36 +124,6 @@ def load_model_up(name: str, token: str):
     return model, tokenizer
 
 
-
-# def generate_response(model, tokenizer, prompt_w_coor: str): # response_file_path
-#     """
-#     Chat with the model.
-#     """
-#     messages = [
-#       {"role": "system", "content": "You are a helpful AI assistant, expert in geography. Please return your answer in 100 tokens or less"},
-#       {"role": "user", "content": prompt_w_coor}
-#     ]
-#     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-#     text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-#     model_inputs = tokenizer([text], return_tensors="pt").to(device)
-
-#     generated_ids = model.generate(**model_inputs, max_new_tokens=200, temperature = 0.0001)
-#     generated_ids = [output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)]
-
-#     response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-
-#     # # Create a dictionary to store the result
-#     # result = {
-#     #     "prompt": prompt_w_coor,
-#     #     "response": response
-#     # }
-
-#     # # Append the response to the JSONL file
-#     # with open(response_file_path, "a") as f:
-#     #     f.write(json.dumps(result) + "\n")
-    
-#     return response
 
 def generate_responses(model, tokenizer, prompts: list, max_tokens=200):
     """
@@ -760,115 +721,6 @@ def process_and_label_sentences(input_path, label_embeddings_path, output_path, 
     print(f"Processed {len(data)} entries. Output saved to {output_path}")
 
 
-## Old stuff, afraid to delete ...
-# def add_sentence_embeddings_to_descriptions(input_path: str, model_name: str = "all-MiniLM-L6-v2", save_path=None):
-#     """
-#     Splits text into sentences and create embeddings for all of them
-
-#     Returns:
-#         dict: location, response, labels and embeddings
-#     """
-#     # Load model
-#     model = SentenceTransformer(model_name)
-
-#     # helper function
-#     def write_jsonl(data, path):
-#         with jsonlines.open(path, mode='w') as writer:
-#             writer.write_all(data)
-
-#     # Load original data
-#     data = read_jsonl(input_path)
-
-#     # Process each item
-#     for item in data:
-#         response_text = item.get("response", "")
-
-#         # 1. Sentence splitting
-#         sentences = nltk.sent_tokenize(response_text)
-
-#         # 2. Embedding
-#         embeddings = model.encode(sentences)
-
-#         # 3. Add to entry
-#         #item["embeddings"] = [emb.tolist() for emb in embeddings]
-#         item["sentence_embeddings"] = [{"sentence": sent, "embedding": emb.tolist()} for sent, emb in zip(sentences, embeddings)
-#     ]
-
-#     # Save output
-#     if save_path:
-#         write_jsonl(data, save_path)
-#         print(f" Finished processing {len(data)} entries.")
-#         print(f" Output saved to: {save_path}")
-
-#     return data
-
-
-
-# def get_best_matching_labels_with_scores(input_path, embedding_l_path, output_path, model_name: str = "all-MiniLM-L6-v2"):
-#     """
-#     Finds the best matching label for each sentence
-
-#     Returns:
-#         best label and similarity score
-#     """
-#     # Load model
-#     model = SentenceTransformer(model_name)
-#     model.similarity_fn_name = SimilarityFunction.COSINE
-#     print(model.similarity_fn_name)
-    
-#     sentence_embeddings = add_sentence_embeddings_to_descriptions(input_path)
-
-#     write_jsonl(sentence_embeddings, output_path)
-#     print(f" Finished processing {len(data)} entries.")
-#     print(f" Output saved to: {save_path}")
-
-#     # Load and prepare label embeddings
-#     label_entries = read_jsonl(embedding_l_path)
-#     label_emb = np.array(
-#         [np.array(entry['embedding'], dtype=np.float32) for entry in label_entries]
-#     )
-#     labels = [entry['label'] for entry in label_entries]
-
-#     predicted = []
-
-#     for entry in sentence_embeddings:
-#         #sent_embs = [np.array(emb, dtype=np.float32) for emb in entry['embeddings']]
-#         sent_embs = [np.array(e['embedding'], dtype=np.float32) for e in entry['sentence_embeddings']]
-
-#         location_predictions = []
-
-#         for sent_emb in sent_embs:
-#             similarities = [model.similarity(sent_emb, label_vec) for label_vec in label_emb]
-#             # Combine similarities with their indices and sort by similarity score
-#             indexed_similarities = list(enumerate(similarities))  # [(index, similarity_score), ...]
-#             sorted_similarities = sorted(indexed_similarities, key=lambda x: x[1], reverse=True)  # Sort in descending order
-            
-#             # Get the top 3 entries
-#             top_matches = [
-#                 {
-#                     "label": labels[idx],
-#                     "score": round(float(score), 4)
-#                 }
-#                 for idx, score in sorted_similarities[:3]  # Take the top 3
-#             ]
-            
-#             # Append to location_predictions
-#             location_predictions.append(top_matches)
-
-#         predicted.append(location_predictions)
-
-
-#     original_data = read_jsonl(input_path)
-
-#     for entry, preds in zip(original_data, predicted):
-#         for sent_entry, pred_list in zip(entry["sentence_embeddings"], preds):
-#             sent_entry["top_predictions"] = pred_list  # Store list of top 3 predictions
-
-#     write_jsonl(output_path, original_data)
-#     print(f"Output saved to: {output_path}")
-#     #return all_best_labels
-
-
 
 def write_jsonl(file_path, data):
     """Writes a list of dictionaries to a JSONL file."""
@@ -899,86 +751,3 @@ def embed_labels():
             writer.write(obj)
     
     print(f"Embeddings saved in {output_file}")
-
-
-# ----------------------- VISUALIZE RESULTS -----------------------------
-def wrap_labels(labels, width=10):
-    return ['\n'.join(textwrap.wrap(label, width)) for label in labels]
-
-
-# def evaluate_top3_predictions(jsonl_path, top_k=3, plot=True):
-#     """
-#     Evaluating the predicted labels by comparing the top three to the true labels.
-
-#     Returns: 
-#     Accuracy = #hits / #total pred
-#     """
-#     data = read_jsonl(jsonl_path)
-
-#     total = 0
-#     correct = 0
-#     predicted_label_counter = Counter()
-#     true_label_counter = Counter()
-
-#     for entry in data:
-#         true_labels = set(entry.get("labels", []))
-#         true_label_counter.update(true_labels)
-#         #print(true_labels)
-
-#         # collect all predicted labels
-#         all_predictions = []
-        
-#         for sent_entry in entry.get("sentence_embeddings", []):
-#             for pred in sent_entry.get("top_predictions", []):
-#                 all_predictions.append((pred["label"], pred["score"]))
-#         #print(all_predictions) 
-        
-#         #  sort them by score
-#         seen = set()
-#         top_preds = []
-#         for label, score in sorted(all_predictions, key=lambda x: x[1], reverse=True):
-#             if label not in seen:
-#                 top_preds.append(label)
-#                 seen.add(label)
-#             if len(top_preds) == top_k:
-#                 break
-#         #print(top_preds)
-
-#         total += 1
-#         if any(label in true_labels for label in top_preds):
-#             correct += 1
-
-#         # Label distribution update
-#         predicted_label_counter.update(top_preds)
-
-#     accuracy = correct / total if total > 0 else 0
-#     print(f"\nEvaluated {total} descriptions")
-#     print(f"Top-{top_k} Description-Level Accuracy: {accuracy:.4f}")
-
-#     # Plotting
-#     if plot:
-#         # Plot the distribution of predicted labels
-#         top_k = 20
-#         common_labels = [label for label, _ in predicted_label_counter.most_common(top_k)]
-#         pred_vals = [predicted_label_counter[label] for label in common_labels]
-#         true_vals = [true_label_counter.get(label, 0) for label in common_labels]
-    
-#         wrapped_labels = wrap_labels(common_labels)
-    
-#         x = np.arange(len(common_labels))
-#         width = 0.35
-    
-#         plt.figure(figsize=(18, 6))
-#         plt.bar(x - width/2, pred_vals, width, label='Predicted')
-#         plt.bar(x + width/2, true_vals, width, label='True')
-#         plt.xticks(x, wrapped_labels, rotation=0, ha='center')
-#         plt.title("Top 20 Labels: Predicted vs True")
-#         plt.ylabel("Count")
-#         plt.legend()
-#         plt.tight_layout()
-#         plt.show()
-        
-#     return accuracy, predicted_label_counter, true_label_counter
-
-from sklearn.preprocessing import MultiLabelBinarizer
-

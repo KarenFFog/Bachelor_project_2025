@@ -3,7 +3,7 @@
 #SBATCH --output=exp_1_%j.out
 #SBATCH --error=exp_1_%j.err
 #SBATCH --partition=gpu             # Or 'cpu' if you're not using a GPU
-#SBATCH --gres=gpu:a100:1           # Remove this line if using CPU only
+#SBATCH --gres=gpu:1           # Remove this line if using CPU only
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=16G
 #SBATCH --time=02:00:00
